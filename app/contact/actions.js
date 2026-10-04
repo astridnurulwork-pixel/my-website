@@ -1,6 +1,7 @@
 "use server";
 
 import { messages } from "@/lib/db";
+import { revalidatePath } from "next/cache";
 
 export async function submitContactForm(formData) {
     const name = formData.get("name");
@@ -18,6 +19,9 @@ export async function submitContactForm(formData) {
         message,
         createdAt: new Date().toISOString(),
     });
+
+    // Memaksa halaman /messages memperbarui data
+    revalidatePath("/messages");
 
     return { success: true };
 }
