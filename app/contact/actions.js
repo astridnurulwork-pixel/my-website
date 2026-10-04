@@ -1,27 +1,25 @@
-"use server";
+'use server';
 
-import { messages } from "@/lib/db";
-import { revalidatePath } from "next/cache";
+import { sql } from '@vercel/postgres';
+import { revalidatePath } from 'next/cache';
 
-export async function submitContactForm(formData) {
-    const name = formData.get("name");
-    const email = formData.get("email");
-    const message = formData.get("message");
+export async function handleContactSubmit(formData) {
+    const name = formData.get('name');
+    const email = formData.get('email');
+    const message = formData.get('message');
+    const id = Date.now();
+    const createdAt = new Date().toISOString();
 
-    if (!name || !email || !message) {
-        return { success: false, error: "Semua field wajib diisi." };
+    try {
+        // Masukkan data ke tabel messages di database
+        await sql`
+            INSERT INTO messages (id, name, email, message, createdat) 
+            VALUES (${id}, ${name}, ${email}, ${message}, ${createdAt})
+        `;
+
+        // Refresh halaman messages agar data terbaru langsung muncul
+        revalidatePath('/messages');
+    } catch (error) {
+        console.error('Gagal menyimpan pesan:', error);
     }
-
-    messages.push({
-        id: Date.now(),
-        name,
-        email,
-        message,
-        createdAt: new Date().toISOString(),
-    });
-
-    // Memaksa halaman /messages memperbarui data
-    revalidatePath("/messages");
-
-    return { success: true };
 }
